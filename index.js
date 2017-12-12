@@ -4,7 +4,8 @@ const app = express();
 
 const writeFile = require('util').promisify(fs.writeFile);
 
-const port = process.env.port || 3000;
+const port = process.env.port || 8084;
+const URL_PREFIX = 'doc-feedback';
 
 let data = {};
 try {
@@ -14,7 +15,7 @@ try {
 }
 
 app
-    .get('/', (req, res) => {
+    .get(`/${URL_PREFIX}`, (req, res) => {
         const docUrl = req.query.doc;
         const docData = data[docUrl] || [];
 
@@ -27,14 +28,14 @@ app
             votes: docData.length
         });
     })
-    .post('/', (req, res) => {
+    .post(`/${URL_PREFIX}`, (req, res) => {
         const query = req.query;
         const docUrl = req.query.doc;
 
         data[docUrl] || (data[docUrl] = []);
         data[docUrl].push(query);
 
-        file.write('data.json', JSON.stringify(data))
+        writeFile('data.json', JSON.stringify(data))
             .then(() => res.send('ok'))
             .catch(err => {
                 console.error(err);
