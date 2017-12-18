@@ -1,0 +1,57 @@
+`post-Ручка
+    Принимает
+        repo
+        commitHash
+        docUrl
+        user
+
+        rating (видимо, у себя, последний всегда главный)
+        message (видимо в issue на gh) - должно стать опционально, каждый раз новый issue
+        screen (когда-нибудь)
+
+        total ? (хранить у себя, чтобы строить графики?)
+
+    Возможность переголосовывать ?
+        - не давать накручивать total
+        - уметь сохранять несколько message от одного пользователя
+
+    Жить за слешем в *.bem.info/_api/vote, слушать 80 порт
+
+
+get-ручка, отдающая total для статьи`
+    docUrl
+
+
+-----------------------------------------------
+
+const passportGitHub = require('./auth');
+const GH_API = 'https://api.github.com';
+
+ const issuesRequestUrl = [GH_API, 'repos', query.org, query.repo, 'issues'].join('/');
+
+        function createIssue(commentData, token) {
+            return got.post(issuesRequestUrl, {
+                body: {
+                    title: commentData.title,
+                    body: commentData.body
+                },
+                token
+            });
+        }
+
+    Auth routes
+    .get('/auth/github', passportGitHub.authenticate('github', { scope: ['public_repo'] }))
+    .get('/login_callback',
+        passportGitHub.authenticate('github', { failureRedirect: config.pathPrefix + '/error' }),
+        function(req, res) {
+            res.redirect(req.session.retpath || config.pathPrefix + '/');
+        }
+    )
+    .get('/logout', (req, res) => {
+        req.logout();
+        res.redirect(config.pathPrefix + '/');
+    })
+    .get('/error', (req, res) => {
+        res.status(401);
+        render(req, res, { view: '401' });
+    });
