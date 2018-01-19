@@ -16,9 +16,8 @@ try {
 
 app
     .get(`/${URL_PREFIX}`, (req, res) => {
-        const docUrl = req.query.doc;
+        const docUrl = encodeURIComponent(req.query.doc);
         const docData = data[docUrl] || [];
-
         const total = docData.reduce((acc, feedback) => {
             return acc + +feedback.rating;
         }, 0);
@@ -35,12 +34,16 @@ app
         data[docUrl] || (data[docUrl] = []);
         data[docUrl].push(query);
 
-        writeFile('data.json', JSON.stringify(data))
+        const dataStr = JSON.stringify(data);
+
+        writeFile('data.json', dataStr)
             .then(() => res.send('ok'))
             .catch(err => {
                 console.error(err);
                 res.status(500).send('Something happend');
             });
+
+        console.log(dataStr);
     });
 
 
