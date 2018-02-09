@@ -46,7 +46,8 @@ app
         console.log(dataStr);
     });
 
-
-app.listen(port, () => {
+module.parent || app.listen(port, () => {
     console.log('Server is listening on', port);
 });
+
+module.exports = app;
