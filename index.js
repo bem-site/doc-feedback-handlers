@@ -1,53 +1,69 @@
-const fs = require('fs');
 const express = require('express');
 const app = express();
+const MongoClient = require('mongodb').MongoClient;
 
-const writeFile = require('util').promisify(fs.writeFile);
+const config = require('./config');
+const port = config.defaultPort;
+const mongoUrl = config.mongo;
+const urlPrefix = config.pathPrefix;
 
-const port = process.env.port || 8090;
-const URL_PREFIX = 'doc-feedback';
+const dbConnection = new Promise((resolve, reject) => {
+    MongoClient.connect(mongoUrl, function(err, client) {
+        if (err) return reject(err);
 
-let data = {};
-try {
-    data = require('./data');
-} catch(err) {
-    console.log('WARN: no data.json file was found');
-}
+        console.log("Connected successfully to mongo");
 
-app
-    .get(`/${URL_PREFIX}`, (req, res) => {
-        const docUrl = encodeURIComponent(req.query.doc);
-        const docData = data[docUrl] || [];
-        const total = docData.reduce((acc, feedback) => {
-            return acc + +feedback.rating;
-        }, 0);
-
-        res.send({
-            total,
-            votes: docData.length
-        });
-    })
-    .post(`/${URL_PREFIX}`, (req, res) => {
-        const query = req.query;
-        const docUrl = req.query.doc;
-
-        data[docUrl] || (data[docUrl] = []);
-        data[docUrl].push(query);
-
-        const dataStr = JSON.stringify(data);
-
-        writeFile('data.json', dataStr)
-            .then(() => res.send('ok'))
-            .catch(err => {
-                console.error(err);
-                res.status(500).send('Something happend');
-            });
-
-        console.log(dataStr);
+        resolve(client.db('feedbacks'));
     });
-
-module.parent || app.listen(port, () => {
-    console.log('Server is listening on', port);
 });
 
+function find(collection, criteria) {
+    return new Promise((resolve, reject) => {
+        collection.find(criteria).toArray((err, docs) => {
+            if (err) return reject(err);
+
+            resolve(docs);
+        });
+    });
+}
+
+dbConnection.then(db => {
+    const collection = db.collection('docs');
+
+    app
+        .get(`/${urlPrefix}`, (req, res) => {
+            const doc = encodeURIComponent(req.query.doc);
+            find(collection, { doc }).then(docData => {
+                const total = docData.reduce((acc, feedback) => {
+                    return acc + +feedback.rating;
+                }, 0);
+
+                res.send({
+                    total,
+                    votes: docData.length
+                });
+            });
+        })
+        .post(`/${urlPrefix}`, (req, res) => {
+            const query = req.query;
+
+            collection.insert(query, (err, result) => {
+                if (err) return res.status(500).send('DB error :(');
+
+                console.log(result);
+
+                res.send('ok');
+            });
+        });
+
+    app.listen(port, () => {
+        console.log('Server is listening on', port);
+    });
+});
+
+// module.parent || app.listen(port, () => {
+//     console.log('Server is listening on', port);
+// });
+
+// TODO: fixme, should work async from within bem.info
 module.exports = app;
