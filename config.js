@@ -1,6 +1,6 @@
 const env = process.env;
 const config = {
-    defaultPort: env.port || 8090,
+    defaultPort: env.DOC_FEEDBACK_HANDLERS_PORT || env.port || 8090,
     pathPrefix: env.DOC_FEEDBACK_PATH_PREFIX || 'doc-feedback',
 
     // sessionSecret: 'FEEDBACK_REPLACE_ME_WITH_RANDOM_STRING',

@@ -11,7 +11,7 @@ const dbConnection = new Promise((resolve, reject) => {
     MongoClient.connect(mongoUrl, function(err, client) {
         if (err) return reject(err);
 
-        console.log("Connected successfully to mongo");
+        console.log('Connected successfully to mongo');
 
         resolve(client.db('feedbacks'));
     });
@@ -27,13 +27,14 @@ function find(collection, criteria) {
     });
 }
 
-dbConnection.then(db => {
+module.exports = dbConnection.then(db => {
     const collection = db.collection('docs');
 
     app
         .get(`/${urlPrefix}`, (req, res) => {
             const doc = encodeURIComponent(req.query.doc);
             find(collection, { doc }).then(docData => {
+
                 const total = docData.reduce((acc, feedback) => {
                     return acc + +feedback.rating;
                 }, 0);
@@ -50,20 +51,13 @@ dbConnection.then(db => {
             collection.insert(query, (err, result) => {
                 if (err) return res.status(500).send('DB error :(');
 
-                console.log(result);
-
                 res.send('ok');
             });
         });
 
-    app.listen(port, () => {
+    module.parent || app.listen(port, () => {
         console.log('Server is listening on', port);
     });
+
+    return app;
 });
-
-// module.parent || app.listen(port, () => {
-//     console.log('Server is listening on', port);
-// });
-
-// TODO: fixme, should work async from within bem.info
-module.exports = app;
