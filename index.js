@@ -1,5 +1,6 @@
 const express = require('express');
-const app = express();
+const app = express().enable('trust proxy');
+
 const MongoClient = require('mongodb').MongoClient;
 
 const config = require('./config');
@@ -46,9 +47,12 @@ module.exports = dbConnection.then(db => {
             });
         })
         .post(`/${urlPrefix}`, (req, res) => {
-            const query = req.query;
+            const data = Object.assign({
+                ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+                date: new Date(),
+            }, req.query);
 
-            collection.insert(query, (err, result) => {
+            collection.insert(data, (err, result) => {
                 if (err) return res.status(500).send('DB error :(');
 
                 res.send('ok');
