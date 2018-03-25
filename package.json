@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node .",
+    "docker-build": "docker build . -t ${user}doc-feedback-handlers:latest",
+    "docker-push": "docker push ${user}doc-feedback-handlers:latest",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
