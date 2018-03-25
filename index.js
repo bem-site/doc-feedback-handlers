@@ -1,3 +1,4 @@
+const fs = require('fs');
 const express = require('express');
 const app = express().enable('trust proxy');
 
@@ -17,7 +18,7 @@ function find(collection, criteria) {
 
 module.exports = function(opts = {}) {
     Object.assign(config, opts);
-    const port = config.defaultPort;
+    const portOrSocket = config.portOrSocket;
     const mongoUrl = config.mongo;
     const urlPrefix = config.pathPrefix;
 
@@ -32,6 +33,7 @@ module.exports = function(opts = {}) {
     });
 
     return dbConnection.then(db => {
+
         const collection = db.collection('docs');
 
         app
@@ -61,11 +63,30 @@ module.exports = function(opts = {}) {
                     res.send('ok');
                 });
             });
-
-        module.parent || app.listen(port, () => {
-            console.log('Server is listening on', port);
-        });
-
         return app;
     });
 };
+
+if (!module.parent) {
+    const portOrSocket = config.portOrSocket;
+
+    if (isNaN(portOrSocket)) {
+        if (fs.existsSync(portOrSocket)) {
+            try {
+                fs.unlinkSync(portOrSocket);
+            } catch (e) { }
+        }
+    }
+    module.exports()
+        .then(app => {
+            app.listen(portOrSocket, () => {
+                console.log('Server is listening on', portOrSocket);
+            });
+
+            isNaN(portOrSocket) && fs.chmod(portOrSocket, '0777');
+        })
+        .catch(e => {
+            console.error('Error ---> ', e.stack || e);
+            process.exit(1);
+        });
+}
