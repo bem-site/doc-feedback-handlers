@@ -1,9 +1,12 @@
 const fs = require('fs');
 const express = require('express');
 const bodyParser = require('body-parser');
+const morgan = require('morgan');
+
 const app = express()
     .enable('trust proxy')
-    .use(bodyParser.json());
+    .use(bodyParser.json())
+    .use(morgan('combined'));
 
 const MongoClient = require('mongodb').MongoClient;
 
@@ -41,6 +44,7 @@ module.exports = function(opts = {}) {
 
         app
             .get(`/${urlPrefix}`, (req, res) => {
+                console.log('get ', req.url, req.query);
                 const doc = encodeURIComponent(req.query.doc);
                 find(collection, { doc }).then(docData => {
 
@@ -55,6 +59,7 @@ module.exports = function(opts = {}) {
                 });
             })
             .post(`/${urlPrefix}`, (req, res) => {
+                console.log('post ', req.url, req.body);
                 const data = Object.assign({
                     ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
                     date: new Date(),
