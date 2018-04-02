@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const app = express()
     .enable('trust proxy')
     .use(bodyParser.json())
+    .use(bodyParser.urlencoded({ extended: true }))
     .use(morgan('combined'));
 
 const MongoClient = require('mongodb').MongoClient;
@@ -63,7 +64,7 @@ module.exports = function(opts = {}) {
                 const data = Object.assign({
                     ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
                     date: new Date(),
-                }, req.query);
+                }, req.body);
 
                 collection.insert(data, (err, result) => {
                     if (err) return res.status(500).send('DB error :(');
