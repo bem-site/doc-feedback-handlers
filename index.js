@@ -1,6 +1,9 @@
 const fs = require('fs');
 const express = require('express');
-const app = express().enable('trust proxy');
+const bodyParser = require('body-parser');
+const app = express()
+    .enable('trust proxy')
+    .use(bodyParser.json());
 
 const MongoClient = require('mongodb').MongoClient;
 
