@@ -25,7 +25,6 @@ function find(collection, criteria) {
 
 module.exports = function(opts = {}) {
     Object.assign(config, opts);
-    const portOrSocket = config.portOrSocket;
     const mongoUrl = config.mongo;
     const urlPrefix = config.pathPrefix;
 
@@ -61,10 +60,11 @@ module.exports = function(opts = {}) {
             })
             .post(`/${urlPrefix}`, (req, res) => {
                 console.log('post ', req.url, req.body);
+                // NOTE: for some reason the data is in req.query when posted from localhost
                 const data = Object.assign({
                     ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
                     date: new Date(),
-                }, req.body);
+                }, req.query, req.body);
 
                 collection.insert(data, (err, result) => {
                     if (err) return res.status(500).send('DB error :(');
